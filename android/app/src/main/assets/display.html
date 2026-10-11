@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Church Timer - TV Display</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+    body, html {
+      width: 100%;
+      height: 100%;
+      background-color: #0a0a0a;
+      color: #ffffff;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      transition: background-color 0.2s ease;
+    }
+
+    /* Red Flashing when Time's Up */
+    body.time-up-mode {
+      animation: flash-bg 0.8s infinite alternate;
+    }
+    @keyframes flash-bg {
+      0% { background-color: #7f1d1d; }
+      100% { background-color: #b91c1c; }
+    }
+
+    /* Top Section */
+    .top-bar {
+      width: 100%;
+      padding: 2.5vh 4vw;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      z-index: 10;
+    }
+    .current-activity {
+      font-size: 4.5vw;
+      font-weight: 800;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      color: #ffffff;
+      text-shadow: 0 4px 12px rgba(0, 0, 0, 0.8);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 80vw;
+    }
+    .current-activity span {
+      color: #eab54d;
+      font-weight: 900;
+      margin-right: 1.2vw;
+    }
+    .status-badge {
+      font-size: 1.6vw;
+      font-weight: 700;
+      padding: 0.6vh 1.4vw;
+      border-radius: 999px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+    .status-badge.live {
+      background: rgba(34, 197, 94, 0.2);
+      border-color: #22c55e;
+      color: #4ade80;
+    }
+    .status-badge.paused {
+      background: rgba(234, 181, 77, 0.2);
+      border-color: #eab54d;
+      color: #facc15;
+    }
+
+    /* Center Timer Display */
+    .timer-container {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      position: relative;
+    }
+    .timer-digits {
+      font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+      font-size: 20vw;
+      font-weight: 900;
+      line-height: 0.9;
+      letter-spacing: -0.04em;
+      color: #ffffff;
+      text-shadow: 0 10px 40px rgba(0, 0, 0, 0.9);
+      font-variant-numeric: tabular-nums;
+    }
+    .time-up-text {
+      display: none;
+      font-size: 10vw;
+      font-weight: 900;
+      letter-spacing: 0.1em;
+      color: #ffffff;
+      text-shadow: 0 8px 32px rgba(0,0,0,0.9);
+      animation: pulse 0.6s infinite alternate;
+      margin-top: 2vh;
+    }
+    body.time-up-mode .time-up-text {
+      display: block;
+    }
+    body.time-up-mode .timer-digits {
+      color: #ffffff;
+    }
+    @keyframes pulse {
+      0% { transform: scale(1); opacity: 0.9; }
+      100% { transform: scale(1.08); opacity: 1; }
+    }
+
+    /* Progress Bar */
+    .progress-bar-container {
+      width: 100%;
+      height: 2.2vh;
+      background-color: #1a1a1a;
+      overflow: hidden;
+      position: relative;
+    }
+    .progress-bar-fill {
+      height: 100%;
+      width: 0%;
+      background-color: #eab54d;
+      transition: width 0.4s linear;
+      box-shadow: 0 0 20px rgba(234, 181, 77, 0.6);
+    }
+    body.time-up-mode .progress-bar-fill {
+      background-color: #ef4444;
+      box-shadow: 0 0 20px rgba(239, 68, 68, 0.8);
+      width: 100% !important;
+    }
+
+    /* Bottom Section */
+    .bottom-bar {
+      width: 100%;
+      padding: 2.5vh 4vw;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: linear-gradient(180deg, transparent, rgba(0,0,0,0.8));
+    }
+    .next-activity {
+      font-size: 3.2vw;
+      font-weight: 700;
+      color: #a3a3a3;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 85vw;
+    }
+    .next-activity span {
+      color: #737373;
+      font-weight: 800;
+      margin-right: 1vw;
+    }
+    .offline-tag {
+      font-size: 1.5vw;
+      font-weight: 700;
+      color: #525252;
+      letter-spacing: 0.05em;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Bar: Current Activity -->
+  <div class="top-bar">
+    <div class="current-activity" id="currentActivityLabel">
+      <span>NOW:</span> <span id="currentName" style="color: #ffffff;">Loading...</span>
+    </div>
+    <div class="status-badge live" id="statusBadge">OFFLINE</div>
+  </div>
+
+  <!-- Big Timer Display: 20vw -->
+  <div class="timer-container">
+    <div class="timer-digits" id="timerDigits">--:--</div>
+    <div class="time-up-text" id="timeUpBanner">TIME'S UP!</div>
+  </div>
+
+  <!-- Progress Bar: Yellow -->
+  <div class="progress-bar-container">
+    <div class="progress-bar-fill" id="progressBar"></div>
+  </div>
+
+  <!-- Bottom Bar: Next Activity -->
+  <div class="bottom-bar">
+    <div class="next-activity" id="nextActivityLabel">
+      <span>NEXT:</span> <span id="nextName" style="color: #a3a3a3;">--</span>
+    </div>
+    <div class="offline-tag">100% OFFLINE</div>
+  </div>
+
+  <script>
+    // Offline Web Audio API Synthesizer (No external sound files required)
+    let audioCtx = null;
+    let lastTimeUpState = false;
+
+    function playBeep() {
+      try {
+        if (!audioCtx) {
+          const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+          if (AudioContextClass) audioCtx = new AudioContextClass();
+        }
+        if (audioCtx && audioCtx.state === 'suspended') {
+          audioCtx.resume();
+        }
+        if (!audioCtx) return;
+
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(880, audioCtx.currentTime); // 880Hz A5 note
+        osc.frequency.exponentialRampToValueAtTime(440, audioCtx.currentTime + 0.5);
+
+        gain.gain.setValueAtTime(0.4, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
+
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.55);
+      } catch (e) {
+        console.warn('Audio autoplay blocked or unsupported:', e);
+      }
+    }
+
+    // Enable audio context on any user tap (for smart TVs / remotes)
+    window.addEventListener('click', () => {
+      if (!audioCtx) {
+        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+        if (AudioContextClass) audioCtx = new AudioContextClass();
+      }
+      if (audioCtx && audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+    }, { once: true });
+
+    const currentNameEl = document.getElementById('currentName');
+    const nextNameEl = document.getElementById('nextName');
+    const timerDigitsEl = document.getElementById('timerDigits');
+    const progressBarEl = document.getElementById('progressBar');
+    const statusBadgeEl = document.getElementById('statusBadge');
+
+    function updateDisplay(data) {
+      if (!data) return;
+
+      currentNameEl.textContent = data.activityName || 'None';
+      nextNameEl.textContent = data.nextActivityName || 'End of Service';
+      timerDigitsEl.textContent = data.formattedTime || '00:00';
+
+      const progress = Math.min(100, Math.max(0, data.progressPercent || 0));
+      progressBarEl.style.width = progress + '%';
+
+      if (data.isTimeUp) {
+        document.body.classList.add('time-up-mode');
+        statusBadgeEl.textContent = "TIME UP";
+        statusBadgeEl.className = "status-badge";
+        statusBadgeEl.style.backgroundColor = "rgba(239, 68, 68, 0.4)";
+        statusBadgeEl.style.borderColor = "#ef4444";
+        statusBadgeEl.style.color = "#ffffff";
+
+        if (!lastTimeUpState) {
+          playBeep();
+        }
+      } else {
+        document.body.classList.remove('time-up-mode');
+        statusBadgeEl.style.backgroundColor = "";
+        statusBadgeEl.style.borderColor = "";
+
+        if (data.isRunning) {
+          statusBadgeEl.textContent = "RUNNING";
+          statusBadgeEl.className = "status-badge live";
+        } else {
+          statusBadgeEl.textContent = "PAUSED";
+          statusBadgeEl.className = "status-badge paused";
+        }
+      }
+
+      lastTimeUpState = !!data.isTimeUp;
+    }
+
+    // Poll /time endpoint every 500ms
+    async function pollTime() {
+      try {
+        const res = await fetch('/time', { cache: 'no-store' });
+        if (res.ok) {
+          const data = await res.json();
+          updateDisplay(data);
+        }
+      } catch (err) {
+        // Disconnected or server starting
+        statusBadgeEl.textContent = "CONNECTING...";
+        statusBadgeEl.className = "status-badge paused";
+      }
+    }
+
+    // Initial poll & intervals
+    pollTime();
+    setInterval(pollTime, 500);
+  </script>
+</body>
+</html>

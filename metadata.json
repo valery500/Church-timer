@@ -1,0 +1,6 @@
+{
+  "name": "ChurchTimerOffline",
+  "description": "100% offline church service timer system with Android TV NanoHTTPD web broadcast, phone controller, and ready-to-build Android project with GitHub Actions CI.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

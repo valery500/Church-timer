@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/itemContainer"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginBottom="8dp"
+    android:background="@drawable/bg_card"
+    android:gravity="center_vertical"
+    android:orientation="horizontal"
+    android:padding="14dp">
+
+    <!-- Drag handle icon -->
+    <ImageView
+        android:id="@+id/ivDragHandle"
+        android:layout_width="24dp"
+        android:layout_height="24dp"
+        android:contentDescription="Drag handle"
+        android:src="@drawable/ic_drag_handle" />
+
+    <!-- Activity title -->
+    <TextView
+        android:id="@+id/tvActivityName"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="14dp"
+        android:layout_weight="1"
+        android:text="Praise"
+        android:textColor="@color/white"
+        android:textSize="15sp"
+        android:textStyle="bold" />
+
+    <!-- Activity duration (mm:ss) -->
+    <TextView
+        android:id="@+id/tvActivityDuration"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:layout_marginEnd="12dp"
+        android:fontFamily="monospace"
+        android:text="10:00"
+        android:textColor="@color/yellow_accent"
+        android:textSize="14sp"
+        android:textStyle="bold" />
+
+    <!-- Delete icon -->
+    <ImageView
+        android:id="@+id/ivDelete"
+        android:layout_width="24dp"
+        android:layout_height="24dp"
+        android:background="?android:attr/selectableItemBackgroundBorderless"
+        android:contentDescription="Delete activity"
+        android:src="@drawable/ic_delete" />
+
+</LinearLayout>
