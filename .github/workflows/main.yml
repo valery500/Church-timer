@@ -19,11 +19,21 @@ jobs:
           distribution: 'temurin'
           cache: gradle
 
-      - name: Make gradlew executable
-        run: chmod +x ./gradlew
+      - name: Setup Gradle 8.5
+        uses: gradle/actions/setup-gradle@v3
+        with:
+          gradle-version: 8.5
 
-      - name: Build APK
-        run: ./gradlew assembleDebug --no-daemon
+      - name: Build APK (auto creates gradlew if missing)
+        run: |
+          if [ -f "./gradlew" ]; then
+            chmod +x ./gradlew
+            ./gradlew assembleDebug --no-daemon
+          else
+            gradle wrapper --gradle-version 8.5
+            chmod +x ./gradlew
+            ./gradlew assembleDebug --no-daemon
+          fi
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
